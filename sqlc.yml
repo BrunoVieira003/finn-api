@@ -6,5 +6,17 @@ sql:
     gen:
       go:
         package: "models"
+        emit_json_tags: true
         out: db/models
         sql_package: "pgx/v5"
+        overrides:
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: false
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"

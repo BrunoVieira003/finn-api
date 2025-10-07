@@ -5,11 +5,12 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Account struct {
-	ID     pgtype.UUID
-	Name   string
-	Amount pgtype.Numeric
+	ID     uuid.UUID      `json:"id"`
+	Name   string         `json:"name"`
+	Amount pgtype.Numeric `json:"amount"`
 }

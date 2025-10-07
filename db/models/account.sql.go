@@ -7,7 +7,33 @@ package models
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
+
+const createAccount = `-- name: CreateAccount :one
+INSERT INTO accounts (name, amount)
+VALUES ($1, 0)
+RETURNING id, name, amount
+`
+
+func (q *Queries) CreateAccount(ctx context.Context, name string) (Account, error) {
+	row := q.db.QueryRow(ctx, createAccount, name)
+	var i Account
+	err := row.Scan(&i.ID, &i.Name, &i.Amount)
+	return i, err
+}
+
+const findAccountById = `-- name: FindAccountById :one
+SELECT id, name, amount FROM accounts WHERE id = $1
+`
+
+func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (Account, error) {
+	row := q.db.QueryRow(ctx, findAccountById, id)
+	var i Account
+	err := row.Scan(&i.ID, &i.Name, &i.Amount)
+	return i, err
+}
 
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, name, amount FROM accounts ORDER BY name
