@@ -8,3 +8,6 @@ SELECT * FROM accounts WHERE id = $1;
 INSERT INTO accounts (name, amount)
 VALUES ($1, 0)
 RETURNING *;
+
+-- name: DeleteAccount :exec
+DELETE FROM accounts WHERE id = $1;
