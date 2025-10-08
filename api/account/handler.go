@@ -17,7 +17,17 @@ func NewAccountHandler(queries *models.Queries) *AccountHandler {
 }
 
 func (h *AccountHandler) GetAccounts(ctx *gin.Context) {
-	accounts, err := h.queries.ListAccounts(ctx)
+	userId := ctx.Param("userId")
+	ownerId, err := uuid.Parse((userId))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Invalid user id passed. The id should be a valid uuid",
+		})
+		return
+	}
+
+	accounts, err := h.queries.ListAccounts(ctx, ownerId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -37,6 +47,15 @@ type NewAccount struct {
 }
 
 func (h *AccountHandler) CreateAccount(ctx *gin.Context) {
+	userId := ctx.Param("userId")
+	ownerId, err := uuid.Parse((userId))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Invalid user id passed. The id should be a valid uuid",
+		})
+		return
+	}
 	var newAccount NewAccount
 
 	if err := ctx.BindJSON(&newAccount); err != nil {
@@ -48,7 +67,11 @@ func (h *AccountHandler) CreateAccount(ctx *gin.Context) {
 		return
 	}
 
-	account, err := h.queries.CreateAccount(ctx, newAccount.Name)
+	account, err := h.queries.CreateAccount(ctx, models.CreateAccountParams{
+		Name:    newAccount.Name,
+		OwnerID: ownerId,
+	})
+
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    http.StatusInternalServerError,
@@ -67,6 +90,17 @@ func (h *AccountHandler) CreateAccount(ctx *gin.Context) {
 
 func (h *AccountHandler) GetAccountById(ctx *gin.Context) {
 	id := ctx.Param("id")
+	userId := ctx.Param("userId")
+
+	ownerId, err := uuid.Parse((userId))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Invalid user id passed. The id should be a valid uuid",
+		})
+		return
+	}
+
 	accountId, err := uuid.Parse((id))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -75,7 +109,8 @@ func (h *AccountHandler) GetAccountById(ctx *gin.Context) {
 		})
 		return
 	}
-	account, err := h.queries.FindAccountById(ctx, accountId)
+
+	account, err := h.queries.FindAccountById(ctx, models.FindAccountByIdParams{OwnerID: ownerId, ID: accountId})
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error":   err.Error(),
@@ -89,7 +124,17 @@ func (h *AccountHandler) GetAccountById(ctx *gin.Context) {
 
 func (h *AccountHandler) DeleteAccount(ctx *gin.Context) {
 	id := ctx.Param("id")
+	userId := ctx.Param("userId")
 	accountId, err := uuid.Parse((id))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Invalid user id passed. The id should be a valid uuid",
+		})
+		return
+	}
+
+	ownerId, err := uuid.Parse((userId))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -97,8 +142,17 @@ func (h *AccountHandler) DeleteAccount(ctx *gin.Context) {
 		})
 		return
 	}
+	_, err = h.queries.FindAccountById(ctx, models.FindAccountByIdParams{OwnerID: ownerId, ID: accountId})
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"code":    http.StatusNotFound,
+			"error":   err.Error(),
+			"message": "Account not found",
+		})
+		return
+	}
 
-	err = h.queries.DeleteAccount(ctx, accountId)
+	err = h.queries.DeleteAccount(ctx, models.DeleteAccountParams{OwnerID: ownerId, ID: accountId})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    http.StatusInternalServerError,

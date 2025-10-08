@@ -1,13 +1,16 @@
 -- name: ListAccounts :many
-SELECT * FROM accounts ORDER BY name;
+SELECT id, name, amount FROM accounts
+WHERE owner_id = $1
+ORDER BY name;
 
 -- name: FindAccountById :one
-SELECT * FROM accounts WHERE id = $1;
+SELECT id, name, amount FROM accounts
+WHERE owner_id = $1 AND id = $2 ;
 
 -- name: CreateAccount :one
-INSERT INTO accounts (name, amount)
-VALUES ($1, 0)
+INSERT INTO accounts (owner_id, name, amount)
+VALUES ($1, $2, 0)
 RETURNING *;
 
 -- name: DeleteAccount :exec
-DELETE FROM accounts WHERE id = $1;
+DELETE FROM accounts WHERE owner_id = $1 AND id = $2;

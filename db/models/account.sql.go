@@ -9,54 +9,90 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts (name, amount)
-VALUES ($1, 0)
-RETURNING id, name, amount
+INSERT INTO accounts (owner_id, name, amount)
+VALUES ($1, $2, 0)
+RETURNING id, name, amount, owner_id
 `
 
-func (q *Queries) CreateAccount(ctx context.Context, name string) (Account, error) {
-	row := q.db.QueryRow(ctx, createAccount, name)
+type CreateAccountParams struct {
+	OwnerID uuid.UUID `json:"owner_id"`
+	Name    string    `json:"name"`
+}
+
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
+	row := q.db.QueryRow(ctx, createAccount, arg.OwnerID, arg.Name)
 	var i Account
-	err := row.Scan(&i.ID, &i.Name, &i.Amount)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Amount,
+		&i.OwnerID,
+	)
 	return i, err
 }
 
 const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM accounts WHERE id = $1
+DELETE FROM accounts WHERE owner_id = $1 AND id = $2
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAccount, id)
+type DeleteAccountParams struct {
+	OwnerID uuid.UUID `json:"owner_id"`
+	ID      uuid.UUID `json:"id"`
+}
+
+func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
+	_, err := q.db.Exec(ctx, deleteAccount, arg.OwnerID, arg.ID)
 	return err
 }
 
 const findAccountById = `-- name: FindAccountById :one
-SELECT id, name, amount FROM accounts WHERE id = $1
+SELECT id, name, amount FROM accounts
+WHERE owner_id = $1 AND id = $2
 `
 
-func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (Account, error) {
-	row := q.db.QueryRow(ctx, findAccountById, id)
-	var i Account
+type FindAccountByIdParams struct {
+	OwnerID uuid.UUID `json:"owner_id"`
+	ID      uuid.UUID `json:"id"`
+}
+
+type FindAccountByIdRow struct {
+	ID     uuid.UUID      `json:"id"`
+	Name   string         `json:"name"`
+	Amount pgtype.Numeric `json:"amount"`
+}
+
+func (q *Queries) FindAccountById(ctx context.Context, arg FindAccountByIdParams) (FindAccountByIdRow, error) {
+	row := q.db.QueryRow(ctx, findAccountById, arg.OwnerID, arg.ID)
+	var i FindAccountByIdRow
 	err := row.Scan(&i.ID, &i.Name, &i.Amount)
 	return i, err
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, name, amount FROM accounts ORDER BY name
+SELECT id, name, amount FROM accounts
+WHERE owner_id = $1
+ORDER BY name
 `
 
-func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
-	rows, err := q.db.Query(ctx, listAccounts)
+type ListAccountsRow struct {
+	ID     uuid.UUID      `json:"id"`
+	Name   string         `json:"name"`
+	Amount pgtype.Numeric `json:"amount"`
+}
+
+func (q *Queries) ListAccounts(ctx context.Context, ownerID uuid.UUID) ([]ListAccountsRow, error) {
+	rows, err := q.db.Query(ctx, listAccounts, ownerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Account
+	var items []ListAccountsRow
 	for rows.Next() {
-		var i Account
+		var i ListAccountsRow
 		if err := rows.Scan(&i.ID, &i.Name, &i.Amount); err != nil {
 			return nil, err
 		}

@@ -10,9 +10,10 @@ import (
 )
 
 type Account struct {
-	ID     uuid.UUID      `json:"id"`
-	Name   string         `json:"name"`
-	Amount pgtype.Numeric `json:"amount"`
+	ID      uuid.UUID      `json:"id"`
+	Name    string         `json:"name"`
+	Amount  pgtype.Numeric `json:"amount"`
+	OwnerID uuid.UUID      `json:"owner_id"`
 }
 
 type User struct {
