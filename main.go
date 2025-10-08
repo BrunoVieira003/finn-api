@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"finnapi/api/account"
+	"finnapi/api/user"
 	"finnapi/db/models"
 )
 
@@ -29,6 +30,9 @@ func main() {
 
 	accountHandler := account.NewAccountHandler(queries)
 	accountHandler.RegisterRoutes(router)
+
+	userHandler := user.NewUserHandler(queries)
+	userHandler.RegisterRoutes(router)
 
 	router.Run()
 }

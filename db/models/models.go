@@ -14,3 +14,10 @@ type Account struct {
 	Name   string         `json:"name"`
 	Amount pgtype.Numeric `json:"amount"`
 }
+
+type User struct {
+	ID       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+}
