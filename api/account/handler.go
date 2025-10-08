@@ -32,12 +32,12 @@ func (h *AccountHandler) GetAccounts(ctx *gin.Context) {
 	})
 }
 
-type NewAccount struct {
+type CreateAccount struct {
 	Name string `json:"name" binding:"required"`
 }
 
 func (h *AccountHandler) CreateAccount(ctx *gin.Context) {
-	var newAccount NewAccount
+	var newAccount CreateAccount
 
 	if err := ctx.BindJSON(&newAccount); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -71,7 +71,7 @@ func (h *AccountHandler) GetAccountById(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
-			"message": "Invalid id passed. The id should be a valid uuid",
+			"message": "Invalid id passed. the id should be a valid uuid",
 		})
 		return
 	}
