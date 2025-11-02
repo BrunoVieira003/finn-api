@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 
 	"finnapi/api/account"
 	"finnapi/db/models"
@@ -18,8 +20,9 @@ func main() {
 	router := gin.Default()
 
 	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, "postgresql://postgres:postgres@localhost:5432/finn")
+	godotenv.Load()
+	
+	conn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic("Cannot connect to database")
 	}
