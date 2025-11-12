@@ -34,13 +34,35 @@ func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 }
 
 const findAccountById = `-- name: FindAccountById :one
-SELECT id, name FROM accounts WHERE id = $1
+SELECT
+    A.id,
+    A.name,
+    COALESCE(
+        SUM(
+            CASE
+                WHEN T.type = 'income' THEN T.amount
+                WHEN T.type = 'expense' THEN -T.amount
+                ELSE 0
+            END
+        ),
+        0
+    ) AS balance
+FROM accounts A
+LEFT JOIN transactions T ON T.account_id = A.id
+WHERE A.id = $1
+GROUP BY A.id, A.name
 `
 
-func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (Account, error) {
+type FindAccountByIdRow struct {
+	ID      uuid.UUID   `json:"id"`
+	Name    string      `json:"name"`
+	Balance interface{} `json:"balance"`
+}
+
+func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (FindAccountByIdRow, error) {
 	row := q.db.QueryRow(ctx, findAccountById, id)
-	var i Account
-	err := row.Scan(&i.ID, &i.Name)
+	var i FindAccountByIdRow
+	err := row.Scan(&i.ID, &i.Name, &i.Balance)
 	return i, err
 }
 

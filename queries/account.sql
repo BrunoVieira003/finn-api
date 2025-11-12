@@ -2,7 +2,23 @@
 SELECT * FROM accounts ORDER BY name;
 
 -- name: FindAccountById :one
-SELECT * FROM accounts WHERE id = $1;
+SELECT
+    A.id,
+    A.name,
+    COALESCE(
+        SUM(
+            CASE
+                WHEN T.type = 'income' THEN T.amount
+                WHEN T.type = 'expense' THEN -T.amount
+                ELSE 0
+            END
+        ),
+        0
+    ) AS balance
+FROM accounts A
+LEFT JOIN transactions T ON T.account_id = A.id
+WHERE A.id = $1
+GROUP BY A.id, A.name;
 
 -- name: CreateAccount :one
 INSERT INTO accounts (name)
