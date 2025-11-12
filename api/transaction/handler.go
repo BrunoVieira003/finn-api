@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type TransactionHandler struct{
@@ -62,4 +63,27 @@ func (h *TransactionHandler) GetTransactions(ctx *gin.Context){
 	ctx.JSON(http.StatusOK, gin.H{
 		"transactions": transactions,
 	})
+}
+
+func (h *TransactionHandler) GetTransactionById(ctx *gin.Context){
+	id := ctx.Param("id")
+	transactionId, err := uuid.Parse((id))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Invalid id passed. the id should be a valid uuid",
+		})
+		return
+	}
+
+	transaction, err := h.queries.FindTransactionById(ctx, transactionId)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error":   err.Error(),
+			"message": "Transaction not found",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, transaction)
 }

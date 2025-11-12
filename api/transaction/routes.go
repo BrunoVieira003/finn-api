@@ -7,4 +7,5 @@ func (h *TransactionHandler) RegisterRoutes(r *gin.Engine) {
 
 	routes.POST("", h.CreateTransaction)
 	routes.GET("", h.GetTransactions)
+	routes.GET("/:id", h.GetTransactionById)
 }
