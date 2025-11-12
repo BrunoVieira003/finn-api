@@ -37,6 +37,8 @@ const findAccountById = `-- name: FindAccountById :one
 SELECT
     A.id,
     A.name,
+    COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount END), 0) AS total_income,
+    COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount END), 0) AS total_expense,
     COALESCE(
         SUM(
             CASE
@@ -46,7 +48,7 @@ SELECT
             END
         ),
         0
-    ) AS balance
+    ) AS total
 FROM accounts A
 LEFT JOIN transactions T ON T.account_id = A.id
 WHERE A.id = $1
@@ -54,15 +56,23 @@ GROUP BY A.id, A.name
 `
 
 type FindAccountByIdRow struct {
-	ID      uuid.UUID   `json:"id"`
-	Name    string      `json:"name"`
-	Balance interface{} `json:"balance"`
+	ID           uuid.UUID   `json:"id"`
+	Name         string      `json:"name"`
+	TotalIncome  interface{} `json:"totalIncome"`
+	TotalExpense interface{} `json:"totalExpense"`
+	Total        interface{} `json:"total"`
 }
 
 func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (FindAccountByIdRow, error) {
 	row := q.db.QueryRow(ctx, findAccountById, id)
 	var i FindAccountByIdRow
-	err := row.Scan(&i.ID, &i.Name, &i.Balance)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.TotalIncome,
+		&i.TotalExpense,
+		&i.Total,
+	)
 	return i, err
 }
 
