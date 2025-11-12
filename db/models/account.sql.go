@@ -12,15 +12,15 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts (name, amount)
-VALUES ($1, 0)
-RETURNING id, name, amount
+INSERT INTO accounts (name)
+VALUES ($1)
+RETURNING id, name
 `
 
 func (q *Queries) CreateAccount(ctx context.Context, name string) (Account, error) {
 	row := q.db.QueryRow(ctx, createAccount, name)
 	var i Account
-	err := row.Scan(&i.ID, &i.Name, &i.Amount)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
@@ -34,18 +34,18 @@ func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 }
 
 const findAccountById = `-- name: FindAccountById :one
-SELECT id, name, amount FROM accounts WHERE id = $1
+SELECT id, name FROM accounts WHERE id = $1
 `
 
 func (q *Queries) FindAccountById(ctx context.Context, id uuid.UUID) (Account, error) {
 	row := q.db.QueryRow(ctx, findAccountById, id)
 	var i Account
-	err := row.Scan(&i.ID, &i.Name, &i.Amount)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, name, amount FROM accounts ORDER BY name
+SELECT id, name FROM accounts ORDER BY name
 `
 
 func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
@@ -57,7 +57,7 @@ func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
 	var items []Account
 	for rows.Next() {
 		var i Account
-		if err := rows.Scan(&i.ID, &i.Name, &i.Amount); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

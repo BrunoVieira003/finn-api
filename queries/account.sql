@@ -5,8 +5,8 @@ SELECT * FROM accounts ORDER BY name;
 SELECT * FROM accounts WHERE id = $1;
 
 -- name: CreateAccount :one
-INSERT INTO accounts (name, amount)
-VALUES ($1, 0)
+INSERT INTO accounts (name)
+VALUES ($1)
 RETURNING *;
 
 -- name: DeleteAccount :exec

@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"finnapi/api/account"
+	"finnapi/api/transaction"
 	"finnapi/db/models"
 )
 
@@ -32,6 +33,9 @@ func main() {
 
 	accountHandler := account.NewAccountHandler(queries)
 	accountHandler.RegisterRoutes(router)
+
+	transactionHandler := transaction.NewTransactionHandler(queries)
+	transactionHandler.RegisterRoutes(router)
 
 	router.Run()
 }
